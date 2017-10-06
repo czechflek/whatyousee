@@ -34,6 +34,7 @@ class SpatialUtils:
         cell_normal = self.__make_directional_vector(cell_aspect, cell_slope)
 
         vector_angle = self.__get_angle_difference(view_vector, cell_normal)
+        # print(math.degrees(vector_angle))
 
         if vector_angle <= SpatialUtils.pi_pul:
             return 0  # the plane is not visible
@@ -76,7 +77,7 @@ class SpatialUtils:
     def __get_cell_slope(self, cell_y, cell_x):
         westeast, northsouth = self.__get_cell_slope_components(cell_y, cell_x)
 
-        return math.degrees(math.sqrt(pow(westeast, 2) + pow(northsouth, 2)))
+        return math.degrees(math.sqrt(pow(westeast, 2) + pow(northsouth, 2))) + 90
 
     """
     Calculate cell aspect. 0 = North, 90 = East, 180 = South, 270 = Westt
@@ -89,7 +90,6 @@ class SpatialUtils:
 
     def __get_cell_aspect(self, cell_y, cell_x):
         westeast, northsouth = self.__get_cell_slope_components(cell_y, cell_x)
-
         return (math.degrees(math.atan2(-1 * northsouth, -1 * westeast)) + 630) % 360
 
     """
@@ -257,23 +257,24 @@ class SpatialUtils:
 
     def __get_cell_slope_components(self, cell_y, cell_x):
         hood = self.elevation_map.get_neighborhood(cell_y, cell_x)
+
         """
-        hood[0][0] = 2
-        hood[0][1] = 2
-        hood[0][2] = 2
-        hood[1][0] = 1
-        hood[1][1] = 1
-        hood[1][2] = 1
+        hood[0][0] = 0
+        hood[0][1] = 0
+        hood[0][2] = 0
+        hood[1][0] = 0
+        hood[1][2] = 0
         hood[2][0] = 0
         hood[2][1] = 0
-        hood[2][2] = 0
+        hood[2][2] = 0        
         """
+
         cn = math.sqrt(2)
         # TODO: Border cases
         westeast = ((cn * hood[0][0] + hood[1][0] + hood[2][0])
-                    - (cn * hood[0][2] + hood[1][2] + hood[2][2])) / 8 * self.cell_resolution
+                    - (cn * hood[0][2] + hood[1][2] + hood[2][2])) / (8 * self.cell_resolution)
         northsouth = ((cn * hood[0][0] + hood[0][1] + hood[0][2]) -
-                      (cn * hood[2][0] + hood[2][1] + hood[2][2])) / 8 * self.cell_resolution
+                      (cn * hood[2][0] + hood[2][1] + hood[2][2])) / (8 * self.cell_resolution)
         return westeast, northsouth
 
     """
@@ -287,9 +288,15 @@ class SpatialUtils:
 
     @staticmethod
     def __make_directional_vector(azimuth, slope):
+        """
         x = math.sin(math.radians(azimuth)) * math.cos(math.radians(slope))
         y = math.sin(math.radians(azimuth)) * math.sin(math.radians(slope))
         z = math.cos(math.radians(slope))
+        """
+
+        x = math.sin(math.radians(azimuth)) * math.cos(math.radians(slope))
+        y = math.cos(math.radians(azimuth)) * math.cos(math.radians(slope))
+        z = math.sin(math.radians(slope))
         return [x, y, z]
 
     """

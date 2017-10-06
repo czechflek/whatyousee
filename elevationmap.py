@@ -82,7 +82,7 @@ class ElevationMap:
                 try:
                     neighborhood[i + 1][j + 1] = self.map[y + i][x + j]
                 except IndexError:
-                    neighborhood[i + 1][j + 1] = float("NaN")
+                    neighborhood[i + 1][j + 1] = float(0)
         return neighborhood
 
     def get_height(self):
@@ -93,3 +93,6 @@ class ElevationMap:
 
     def get_elevation(self, y, x):
         return self.map[y][x]
+
+    def get_map(self):
+        return self.map
