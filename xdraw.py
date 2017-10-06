@@ -1,7 +1,7 @@
 import collections as c
-import time
 
 import numpy as np
+import time
 from matplotlib import colors, pyplot as plt
 
 from elevationmap import ElevationMap
@@ -26,8 +26,6 @@ spatial = SpatialUtils(origin_y, origin_x, elevation_map.get_elevation(origin_y,
                        cell_resolution,
                        elevation_map)
 
-start_time = time.clock()
-print(start_time)
 # create a thread-safe queue of all rings
 i = 1
 rings_queue = c.deque()
@@ -48,11 +46,9 @@ for i in np.arange(0, omitted_rings):
 
 visible_count = invisible_count = 0  # DEBUG
 
-print("Time: {}".format(time.clock() - start_time))
 while rings_queue:
     cell_queue = rings_queue.pop()
     while cell_queue:
-        t1 = time.clock()
         cell = cell_queue.pop()
         cell_y = cell[0]
         cell_x = cell[1]
@@ -80,13 +76,11 @@ while rings_queue:
             visual_magnitude = spatial.visual_magnitude(cell_y, cell_x)
             visual_magnitude_map.set(cell_y, cell_x, visual_magnitude)
             # print("{}:{} = {}".format(cell_y, cell_x, visual_magnitude))
-        t2 = time.clock() - t1
-        print("Time: {}".format(t2))
 
 total_time = time.clock() - start_time
-print("Total time: {}".format(total_time))
 print(visible_count, invisible_count, visible_count + invisible_count)  # DEBUG
 
+"""
 fig = plt.figure()
 a = fig.add_subplot(1, 3, 1)
 a.set_title("Visual Magnitude")
@@ -111,3 +105,4 @@ plt.colorbar(im3, orientation='horizontal')
 
 plt.suptitle("Viewpoint [{}, {}] with elevation offset {}".format(origin_x, origin_y, origin_offset))
 plt.show()
+"""
