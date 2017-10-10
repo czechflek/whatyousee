@@ -235,7 +235,7 @@ class SpatialUtils:
     """
 
     def __get_yxz_differences(self, y, x):
-        elevation = self.elevation_map.get_elevation(y, x)
+        elevation = self.elevation_map[y, x]
         dist_y = abs(self.origin_y - y) * self.cell_resolution
         dist_x = abs(self.origin_x - x) * self.cell_resolution
 
@@ -256,7 +256,6 @@ class SpatialUtils:
     """
 
     def __get_cell_slope_components(self, cell_y, cell_x):
-        hood = self.elevation_map.get_neighborhood(cell_y, cell_x)
 
         """
         hood[0][0] = 0
@@ -269,12 +268,41 @@ class SpatialUtils:
         hood[2][2] = 0        
         """
 
+        """
         cn = math.sqrt(2)
         # TODO: Border cases
         westeast = ((cn * hood[0][0] + hood[1][0] + hood[2][0])
                     - (cn * hood[0][2] + hood[1][2] + hood[2][2])) / (8 * self.cell_resolution)
         northsouth = ((cn * hood[0][0] + hood[0][1] + hood[0][2]) -
                       (cn * hood[2][0] + hood[2][1] + hood[2][2])) / (8 * self.cell_resolution)
+        """
+        # following mess works the same as the commented out code above
+        cn = math.sqrt(2)
+        # TODO: Border cases
+        try:
+            westeast = (
+                           (cn * self.elevation_map[cell_y - 1, cell_x - 1]
+                            + self.elevation_map[cell_y, cell_x - 1]
+                            + cn * self.elevation_map[cell_y + 1, cell_x - 1])
+                           - (cn * self.elevation_map[cell_y - 1, cell_x + 1]
+                              + self.elevation_map[cell_y, cell_x + 1]
+                              + cn * self.elevation_map[cell_y + 1, cell_x + 1])) \
+                       / (8 * self.cell_resolution)
+        except IndexError:
+            westeast = 0
+
+        try:
+            northsouth = (
+                             (cn * self.elevation_map[cell_y - 1, cell_x - 1]
+                              + self.elevation_map[cell_y - 1, cell_x]
+                              + cn * self.elevation_map[cell_y - 1, cell_x + 1])
+                             - (cn * self.elevation_map[cell_y + 1, cell_x - 1]
+                                + self.elevation_map[cell_y + 1, cell_x]
+                                + cn * self.elevation_map[cell_y + 1, cell_x + 1])) \
+                         / (8 * self.cell_resolution)
+        except IndexError:
+            northsouth = 0
+
         return westeast, northsouth
 
     """
