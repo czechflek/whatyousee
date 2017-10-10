@@ -28,15 +28,20 @@ if __name__ == '__main__':
     sumator.start_service()
     workforce = VisualMagWorkforce(elevation_map, cell_resolution, origin_offset, sumator, 4)
 
-    workforce.add_task([200, 300])
-    workforce.add_task([400, 300])
-    workforce.add_task([300, 100])
+    print("Calculating {} viewpoints".format(2 * len(range(100, 400, 20))))
+    for i in range(100, 400, 20):
+        workforce.add_task([200, i])
+        workforce.add_task([300, i])
+
+    print("Initialization finished in: {} s".format(time.clock() - start_time))
+
+    start_time = time.clock()
 
     workforce.start_workers()
     workforce.wait_to_finish()
     sumator.stop_service()
 
-    print("Finished in: {} s".format(time.clock() - start_time))
+    print("Calculation in: {} s".format(time.clock() - start_time))
 
     # fig = plt.figure()
     # a = fig.add_subplot(1, 2, 1)

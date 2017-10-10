@@ -22,25 +22,48 @@ class VisualMagWorkforce:
         self.map_array = elevation_map_obj.get_map()
         self.mp_elevation_map = mp.Array("d", self.map_array.flatten())
 
+    """
+    Add a new viewpoint to the processing queue. If the viewpoint is added when the workers are running,
+    there's no guarantee the point will be calculated.
+    
+    :param task: coordinates of the viewpoint
+    """
+
     def add_task(self, task):
         self.queue.put(task)
+
+    """
+    Spawn the selected number of processes and begin computation.    
+    """
 
     def start_workers(self):
         self.alive = True
         for i in range(self.num_workers):
             t = mp.Process(target=visual_mag_worker, args=(
-            self.mp_elevation_map, self.map_array.shape, self.queue, self.cell_resolution, self.omitted_rings,
-            self.origin_offset))
+                self.mp_elevation_map, self.map_array.shape, self.queue, self.cell_resolution, self.omitted_rings,
+                self.origin_offset))
             self.processes.append(t)
             t.daemon = False
             t.start()
 
-    def stop_workers(self):
-        self.alive = False
+    """
+    Wait for the workers to finish the computation of the queue. Blocking call!
+    """
 
     def wait_to_finish(self):
         for t in self.processes:
             t.join()
+
+
+"""
+Calculate the visual magnitude from a viewpoint. The viewpoints are retrieved from the queue shared among processes.
+
+:param mp_elevation_map: shared multiprocessing array containing elevation data
+:param shape: shape of the array
+:param cell_resolution: resolution of a cell
+:param omitted_distance: distance from a viewpoint which will not be included in visual magnitude calculation
+:param origin_offset: elevation offset for the viewpoints
+"""
 
 
 def visual_mag_worker(mp_elevation_map, shape, queue, cell_resolution, omitted_distance, origin_offset):
@@ -54,7 +77,6 @@ def visual_mag_worker(mp_elevation_map, shape, queue, cell_resolution, omitted_d
             break
         origin_y = origin[0]
         origin_x = origin[1]
-        print(origin)
 
         los_map = Map(shape[0], shape[1], False)
         spatial = SpatialUtils(origin_y, origin_x,
