@@ -6,16 +6,16 @@ import numpy as np
 from elevationmap import ElevationMap
 from map import Map
 from spatialutils import SpatialUtils
+from sumator import sumator
 
 
 class VisualMagWorkforce:
-    def __init__(self, elevation_map_obj, cell_resolution, origin_offset, sumator, num_workers=1, omitted_rings=0):
-        self.alive = False
+    def __init__(self, elevation_map_obj, cell_resolution, origin_offset, num_workers=1, omitted_rings=0):
         self.num_workers = num_workers
         self.queue = mp.Queue()
         self.cell_resolution = cell_resolution
         self.omitted_rings = omitted_rings
-        self.sumator = sumator
+        self.sumator_pipe = None
         self.origin_offset = origin_offset
         self.processes = []
 
@@ -37,11 +37,24 @@ class VisualMagWorkforce:
     """
 
     def start_workers(self):
-        self.alive = True
+        # initialize pipes for communication with sumator
+        recv_connections = []
+        send_connections = []
         for i in range(self.num_workers):
-            t = mp.Process(target=visual_mag_worker, args=(
-                self.mp_elevation_map, self.map_array.shape, self.queue, self.cell_resolution, self.omitted_rings,
-                self.origin_offset))
+            recv_conn, send_conn = mp.Pipe(False)
+            recv_connections.append(recv_conn)
+            send_connections.append(send_conn)
+
+        # start the processes
+        self.sumator_pipe, sumator_connection = mp.Pipe(False)
+        sumator_process = mp.Process(target=sumator, args=(recv_connections, sumator_connection, self.map_array.shape))
+        sumator_process.daemon = False
+        sumator_process.start()
+
+        for i in range(self.num_workers):
+            t = mp.Process(target=visual_mag_worker, args=(send_connections[i],
+                                                           self.mp_elevation_map, self.map_array.shape, self.queue, self.cell_resolution, self.omitted_rings,
+                                                           self.origin_offset))
             self.processes.append(t)
             t.daemon = False
             t.start()
@@ -53,6 +66,9 @@ class VisualMagWorkforce:
     def wait_to_finish(self):
         for t in self.processes:
             t.join()
+
+    def get_sumator_pipe(self):
+        return self.sumator_pipe
 
 
 """
@@ -66,7 +82,7 @@ Calculate the visual magnitude from a viewpoint. The viewpoints are retrieved fr
 """
 
 
-def visual_mag_worker(mp_elevation_map, shape, queue, cell_resolution, omitted_distance, origin_offset):
+def visual_mag_worker(sumator, mp_elevation_map, shape, queue, cell_resolution, omitted_distance, origin_offset):
     print("Worker started")
     elevation_map = np.frombuffer(mp_elevation_map.get_obj()).reshape(shape)
     while not queue.empty():
@@ -118,6 +134,7 @@ def visual_mag_worker(mp_elevation_map, shape, queue, cell_resolution, omitted_d
                     los_map.set(cell_y, cell_x, viewing_los)
                     visible_count += 1
                     visual_magnitude = spatial.visual_magnitude(cell_y, cell_x)
-                    # sumator.add_task([cell_y, cell_x, visual_magnitude])
+                    sumator.send([cell_y, cell_x, visual_magnitude])
         print(visible_count, invisible_count)
+    sumator.send(None)
     print("Worker starved to death")
