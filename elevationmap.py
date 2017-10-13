@@ -7,10 +7,18 @@ class ElevationMap:
         self.loaded = False
         self.map = None
 
-    def read_file(self, filename):
+    def read_map_file(self, filename):
         self.map = cv2.imread(filename, -1)
         self.loaded = True
 
+    def read_viewpoints(self, filename):
+        path = cv2.imread(filename, -1)
+        viewpoints = []
+        for y in range(path.shape[0]):
+            for x in range(path.shape[1]):
+                if path[y][x] > 0:
+                    viewpoints.append([y, x, path[y][x]])
+        return viewpoints
     """
     Generate rectangles around the specified coordinates. Specify the distance to be excluded from the results.
     

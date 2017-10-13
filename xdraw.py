@@ -23,13 +23,14 @@ if __name__ == '__main__':
     freeze_support()
 
     elevation_map = ElevationMap()
-    elevation_map.read_file("testData\mhkdem.tif")
-    workforce = VisualMagWorkforce(elevation_map, cell_resolution, origin_offset, 4)
+    elevation_map.read_map_file("testData\mhkdem.tif")
+    workforce = VisualMagWorkforce(elevation_map, cell_resolution, origin_offset, 10)
 
-    print("Calculating {} viewpoints".format(2 * len(range(100, 400, 20))))
-    for i in range(100, 400, 20):
-        workforce.add_task([200, i])
-        workforce.add_task([300, i])
+    viewpoints = elevation_map.read_viewpoints("testData\path2.tif")
+
+    print("Calculating {} viewpoints".format(len(viewpoints)))
+    for vp in viewpoints:
+        workforce.add_task(vp)
 
     print("Initialization finished in: {} s".format(time.clock() - start_time))
 

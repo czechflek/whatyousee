@@ -5,7 +5,6 @@ def sumator(connections, main_pipe, shape):
     visual_magnitude = np.zeros(shape, "d")
     received_objects = 0
     active_conns = len(connections)
-    print(active_conns)
     while active_conns > 0:
         for conn in connections:
             if conn.poll():

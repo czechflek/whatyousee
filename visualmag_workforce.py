@@ -93,6 +93,7 @@ def visual_mag_worker(sumator, mp_elevation_map, shape, queue, cell_resolution, 
             break
         origin_y = origin[0]
         origin_x = origin[1]
+        origin_weight = origin[2]
 
         los_map = Map(shape[0], shape[1], False)
         spatial = SpatialUtils(origin_y, origin_x,
