@@ -54,3 +54,4 @@ class LoadPathBtn(object):
     def onClick(self):
         Settings.path_map = pythonaddins.OpenDialog("Select the path data...", False, ".", "Select",
                                                     ImageSelectFilter(), "Path map - *.tif, *.tiff, *.png")
+
