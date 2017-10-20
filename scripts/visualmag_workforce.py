@@ -2,6 +2,8 @@ import Queue
 import multiprocessing as mp
 
 import numpy as np
+from os import path
+import sys
 
 from elevationmap import ElevationMap
 from map import Map
@@ -10,10 +12,11 @@ from sumator import sumator
 
 
 class VisualMagWorkforce:
-    def __init__(self, elevation_map_obj, cell_resolution, origin_offset, num_workers=1, omitted_rings=0):
+    def __init__(self, elevation_map_obj, origin_offset, num_workers=1, omitted_rings=0):
+        mp.set_executable(path.join(sys.exec_prefix, 'python.exe'))
         self.num_workers = num_workers
         self.queue = mp.Queue()
-        self.cell_resolution = cell_resolution
+        self.cell_resolution = elevation_map_obj.get_cell_resolution()
         self.omitted_rings = omitted_rings
         self.sumator_pipe = None
         self.origin_offset = origin_offset
@@ -53,7 +56,8 @@ class VisualMagWorkforce:
 
         for i in range(self.num_workers):
             t = mp.Process(target=visual_mag_worker, args=(send_connections[i],
-                                                           self.mp_elevation_map, self.map_array.shape, self.queue, self.cell_resolution, self.omitted_rings,
+                                                           self.mp_elevation_map, self.map_array.shape, self.queue,
+                                                           self.cell_resolution, self.omitted_rings,
                                                            self.origin_offset))
             self.processes.append(t)
             t.daemon = False

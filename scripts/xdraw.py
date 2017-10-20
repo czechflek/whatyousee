@@ -1,5 +1,6 @@
+import arcpy
 import time
-from multiprocessing import freeze_support
+from multiprocessing import freeze_support, set_executable
 
 import matplotlib.pyplot as plt
 from matplotlib import colors
@@ -21,25 +22,30 @@ start_time = time.clock()
 
 if __name__ == '__main__':
     freeze_support()
+    dem = str(arcpy.GetParameter(0)).replace("\\", "/")
+    viewpoint_map = str(arcpy.GetParameter(1)).replace("\\", "/")
+    origin_offset = arcpy.GetParameter(2)
+    omitted_rings = arcpy.GetParameter(3)
+    processes = arcpy.GetParameter(4)
 
     elevation_map = ElevationMap()
-    elevation_map.read_map_file("testData\mhkdem.tif")
-    workforce = VisualMagWorkforce(elevation_map, cell_resolution, origin_offset, 10)
+    elevation_map.read_map_file(dem)
+    workforce = VisualMagWorkforce(elevation_map, origin_offset, processes)
 
-    viewpoints = elevation_map.read_viewpoints("testData\path2.tif")
+    viewpoints = elevation_map.read_viewpoints(viewpoint_map)
 
-    print("Calculating {} viewpoints".format(len(viewpoints)))
+    arcpy.AddMessage("Calculating {} viewpoints".format(len(viewpoints)))
     for vp in viewpoints:
         workforce.add_task(vp)
 
-    print("Initialization finished in: {} s".format(time.clock() - start_time))
+    arcpy.AddMessage("Initialization finished in: {} s".format(time.clock() - start_time))
 
     start_time = time.clock()
 
     workforce.start_workers()
     visual_magnitude = workforce.get_sumator_pipe().recv()
 
-    print("Calculation in: {} s".format(time.clock() - start_time))
+    arcpy.AddMessage("Calculation in: {} s".format(time.clock() - start_time))
 
     fig = plt.figure()
     a = fig.add_subplot(1, 2, 1)

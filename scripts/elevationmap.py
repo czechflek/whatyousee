@@ -1,24 +1,32 @@
-import cv2
 import numpy as np
+import arcpy
 
 
 class ElevationMap:
     def __init__(self):
         self.loaded = False
         self.map = None
+        self.cell_resolution = 0
 
-    def read_map_file(self, filename):
-        self.map = cv2.imread(filename, -1)
+    def read_map_file(self, raster):
+        arcpy.AddMessage("Raster: {}".format(raster))
+        self.map = arcpy.RasterToNumPyArray(raster)
+
+        props = arcpy.GetRasterProperties_management(raster, "CELLSIZEX")
+        self.cell_resolution = float(props.getOutput(0))
+
         self.loaded = True
 
-    def read_viewpoints(self, filename):
-        path = cv2.imread(filename, -1)
+    @staticmethod
+    def read_viewpoints(raster):
+        path = arcpy.RasterToNumPyArray(raster)
         viewpoints = []
         for y in range(path.shape[0]):
             for x in range(path.shape[1]):
                 if path[y][x] > 0:
                     viewpoints.append([y, x, path[y][x]])
         return viewpoints
+
     """
     Generate rectangles around the specified coordinates. Specify the distance to be excluded from the results.
     
@@ -126,3 +134,6 @@ class ElevationMap:
 
     def get_map(self):
         return self.map
+
+    def get_cell_resolution(self):
+        return self.cell_resolution
